@@ -1,97 +1,252 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# Payment App
 
-# Getting Started
+A fully functional mobile payment application built with React Native and Firebase. Send money, request payments, track transactions, and receive real-time notifications.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+## Features
 
-## Step 1: Start Metro
+- **Authentication**: Phone number + password login with OTP verification
+- **Wallet Management**: Real-time balance updates, add money functionality
+- **P2P Payments**: Send/receive money using phone numbers
+- **Transaction History**: Complete history with filters (sent/received, status)
+- **Payment Requests**: Request money from users, accept/reject incoming requests
+- **Push Notifications**: Real-time notifications via Firebase Cloud Messaging
+- **QR Code Payments**: Scan QR codes to pay instantly
+- **PIN Security**: Optional transaction PIN protection
+- **Dark Mode**: System-aware theme switching
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+## Tech Stack
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+- React Native 0.84.1 (New Architecture)
+- Firebase Authentication
+- Cloud Firestore
+- Firebase Cloud Messaging (FCM)
+- Cloud Functions
+- React Navigation 7
+- Zustand (State Management)
+- react-native-vision-camera
 
-```sh
-# Using npm
-npm start
+## Prerequisites
 
-# OR using Yarn
-yarn start
+- Node.js >= 22.11.0
+- Xcode 15+ (for iOS)
+- Android Studio (for Android)
+- CocoaPods
+- Firebase Account
+
+## Project Setup
+
+### 1. Clone & Install Dependencies
+
+```bash
+git clone <repository-url>
+cd PaymentApp
+npm install
 ```
 
-## Step 2: Build and run your app
+### 2. Firebase Configuration
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+#### iOS Setup
+
+1. Create a Firebase project at [Firebase Console](https://console.firebase.google.com)
+2. Add an iOS app with bundle ID: `org.reactjs.native.example.PaymentApp`
+3. Download `GoogleService-Info.plist`
+4. Move it to: `ios/PaymentApp/GoogleService-Info.plist`
+5. Enable **Phone Authentication** under Authentication > Sign-in method
+6. Enable **Cloud Firestore** and create database in production mode
+7. Enable **Cloud Messaging**
+
+#### Android Setup
+
+1. Add an Android app with package name: `com.paymentapp`
+2. Download `google-services.json`
+3. Move it to: `android/app/google-services.json`
+4. Add SHA-1 fingerprint from `android/app/debug.keystore` (or your release keystore)
+
+### 3. Update Firebase Config
+
+Edit `src/services/firebase.ts`:
+
+```typescript
+const firebaseConfig = {
+  apiKey: 'YOUR_API_KEY',
+  authDomain: 'YOUR_PROJECT_ID.firebaseapp.com',
+  projectId: 'YOUR_PROJECT_ID',
+  storageBucket: 'YOUR_PROJECT_ID.appspot.com',
+  messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
+  appId: 'YOUR_APP_ID',
+};
+```
+
+### 4. iOS Setup
+
+```bash
+cd ios
+pod install
+cd ..
+```
+
+If pod install times out, try:
+
+```bash
+cd ios
+pod install --verbose
+```
+
+### 5. Deploy Cloud Functions
+
+```bash
+cd functions
+npm install
+npm run deploy
+```
+
+This deploys functions for:
+
+- Sending push notifications on transactions
+- Sending notifications on payment requests
+- Request accept/reject notifications
+
+## Running the App
+
+### iOS (Simulator)
+
+```bash
+npx react-native run-ios
+```
+
+### iOS (Specific Simulator)
+
+```bash
+npx react-native run-ios --simulator="iPhone 15 Pro"
+```
 
 ### Android
 
-```sh
-# Using npm
-npm run android
-
-# OR using Yarn
-yarn android
+```bash
+npx react-native run-android
 ```
 
-### iOS
+### Development Server
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
-bundle install
+```bash
+npx react-native start
 ```
 
-Then, and every time you update your native dependencies, run:
+## Firestore Security Rules
 
-```sh
-bundle exec pod install
+Deploy rules from `firestore.rules`:
+
+```bash
+firebase deploy --only firestore:rules
 ```
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+Or copy rules manually to Firebase Console > Firestore > Rules.
 
-```sh
-# Using npm
-npm run ios
+## App Architecture
 
-# OR using Yarn
-yarn ios
+```
+src/
+├── screens/           # All screen components
+│   ├── auth/         # Login, Signup, Phone Auth
+│   ├── home/         # Home/Wallet
+│   ├── payment/      # Send, Request, QR Scanner
+│   ├── transactions/ # History, Details
+│   └── profile/      # User profile, settings
+├── navigation/        # React Navigation setup
+│   ├── AuthNavigator.tsx
+│   ├── MainTabNavigator.tsx
+│   └── RootNavigator.tsx
+├── stores/            # Zustand state management
+│   ├── authStore.ts
+│   ├── walletStore.ts
+│   └── settingsStore.ts
+├── services/          # Business logic
+│   ├── firebase.ts
+│   ├── paymentService.ts
+│   ├── notificationService.ts
+│   └── pinService.ts
+├── types/             # TypeScript interfaces
+└── utils/             # Helper functions
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+## Data Model
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+### Users Collection
 
-## Step 3: Modify your app
+```
+users/{uid}
+  - phone: string
+  - name: string
+  - balance: number
+  - pin?: string
+  - fcmToken?: string
+  - createdAt: timestamp
+```
 
-Now that you have successfully run the app, let's make changes!
+### Transactions Collection
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+```
+transactions/{transactionId}
+  - senderId: string
+  - receiverId: string
+  - senderName: string
+  - receiverName: string
+  - amount: number
+  - status: 'completed' | 'pending' | 'failed'
+  - note?: string
+  - createdAt: timestamp
+```
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+### Payment Requests Collection
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+```
+paymentRequests/{requestId}
+  - fromId: string
+  - toId: string
+  - amount: number
+  - note?: string
+  - status: 'pending' | 'accepted' | 'rejected'
+  - createdAt: timestamp
+```
 
-## Congratulations! :tada:
+## Testing
 
-You've successfully run and modified your React Native App. :partying_face:
+### Test Users
 
-### Now what?
+New users get $1,000 initial balance for testing.
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
+### Simulating Payments
 
-# Troubleshooting
+1. Create two test accounts with different phone numbers
+2. Each account starts with $1,000 balance
+3. Send money between accounts to test transactions
 
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+## Troubleshooting
 
-# Learn More
+### Pod Install Fails
 
-To learn more about React Native, take a look at the following resources:
+```bash
+cd ios
+pod deintegrate
+pod install --repo-update
+```
 
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+### Firebase Module Errors
+
+Make sure you have the latest versions:
+
+```bash
+npm install @react-native-firebase/app@latest
+```
+
+### TypeScript Errors
+
+Run:
+
+```bash
+npx tsc --noEmit
+```
+
+## License
+
+MIT
