@@ -48,7 +48,7 @@ npm install
 #### iOS Setup
 
 1. Create a Firebase project at [Firebase Console](https://console.firebase.google.com)
-2. Add an iOS app with bundle ID: `org.reactjs.native.example.PaymentApp`
+2. Add an iOS app with bundle ID: `com.ikarandua.PaymentApp`
 3. Download `GoogleService-Info.plist`
 4. Move it to: `ios/PaymentApp/GoogleService-Info.plist`
 5. Enable **Phone Authentication** under Authentication > Sign-in method
